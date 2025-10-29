@@ -1,85 +1,71 @@
-import { useEffect, useState } from "react";
-import { useSelector } from "react-redux";
-import FiltersPanel from "../components/FiltersPanel";
-import CamperCard from "../components/CamperCard";
+import { useDispatch, useSelector } from "react-redux";
 import { getCampers } from "../api/campersApi";
+import CamperCard from "../components/CamperCard";
+import FiltersPanel from "../components/FiltersPanel";
+import { useEffect, useState } from "react";
 
 export default function CatalogPage() {
-  const filters = useSelector((st) => st.filters);
-
+  const filters = useSelector(s => s.filters);
   const [items, setItems] = useState([]);
-  const [page, setPage] = useState(1);
+  const [page, setPage]   = useState(1);
   const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
   const limit = 6;
 
-  // перетворюємо фільтри в params для API
-  const buildParams = () => {
-    const params = {};
-    if (filters.location) params.location = filters.location;
-    if (filters.form) params.form = filters.form;
+  // собираем params из фильтров
+  function buildParams() {
+    const p = {};
+    if (filters.location) p.location = filters.location.trim();
+    if (filters.form && filters.form !== "all") p.form = filters.form;
+    if (filters.features.kitchen) p.kitchen = true;
+    if (filters.features.shower)  p.shower  = true;
+    if (filters.features.airConditioner) p.airConditioner = true;
+    return p;
+  }
 
-    if (filters.features) {
-      Object.entries(filters.features).forEach(([k, v]) => {
-        if (v) params[k] = true; // kitchen=true, shower=true, airConditioner=true
-      });
-    }
-    return params;
-  };
-
-  const fetchPage = async (p, { reset = false } = {}) => {
-    setLoading(true);
-    try {
-      const params = buildParams();
-      const { items: chunk, total } = await getCampers({ page: p, limit, params });
-      setItems((prev) => (reset ? chunk : [...prev, ...chunk]));
-      setTotal(total);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // перше завантаження
+  // загрузка страницы каталога
   useEffect(() => {
-    fetchPage(1, { reset: true });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    let ignore = false;
+    (async () => {
+      setLoading(true);
+      try {
+        const { items: chunk, total } = await getCampers({ page, limit, params: buildParams() });
+        if (!ignore) {
+          setItems(prev => page === 1 ? chunk : [...prev, ...chunk]);
+          setTotal(total);
+        }
+      } finally {
+        if (!ignore) setLoading(false);
+      }
+    })();
+    return () => { ignore = true; };
+  }, [page, filters]); // при смене фильтров — page останется 1 (см. ниже)
 
-  // підвантаження наступних сторінок
-  useEffect(() => {
-    if (page > 1) fetchPage(page);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
+  // apply из FiltersPanel должен делать: setPage(1) и очистку
+  function applyFilters() {
+    setItems([]);
+    setPage(1);
+  }
 
   const canLoadMore = items.length < total;
 
-  // застосувати фільтри: скинути список і сторінку, витягнути заново
-  const applyFilters = async () => {
-    setPage(1);
-    await fetchPage(1, { reset: true });
-  };
-
   return (
-    <div style={{ display: "grid", gap: 12 }}>
+    <div style={{display:"grid", gap:16}}>
       <h1>Каталог кемперів</h1>
 
       <FiltersPanel onApply={applyFilters} />
 
-      <div style={{ display: "grid", gap: 12 }}>
-        {items.map((c) => (
-          <CamperCard key={c.id} camper={c} />
-        ))}
+      <div style={{display:"grid", gap:12}}>
+        {items.map(c => <CamperCard key={c.id} camper={c} />)}
       </div>
 
-      <div>
-        <button
-          onClick={() => setPage((p) => p + 1)}
-          disabled={loading || !canLoadMore}
-          style={{ padding: "10px 14px", borderRadius: "8px" }}
-        >
-          {loading ? "Loading..." : canLoadMore ? "Load More" : "No more"}
-        </button>
-      </div>
+      <button
+        onClick={() => setPage(p => p + 1)}
+        disabled={loading || !canLoadMore}
+        style={{padding:"10px 14px", borderRadius:8}}
+      >
+        {loading ? "Loading..." : (canLoadMore ? "Load More" : "No more")}
+      </button>
     </div>
   );
 }

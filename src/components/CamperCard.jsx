@@ -1,39 +1,34 @@
-import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
-import { toggleFav } from "../store/favoritesSlice";
-import s from "./CamperCard.module.css";
-
-const priceUi = (n) => Number(n).toFixed(2).replace(".", ",");
+import { toggleFavorite } from "../store/favoritesSlice";
 
 export default function CamperCard({ camper }) {
-  const img = camper.gallery?.[0]?.thumb || camper.gallery?.[0]?.original;
-  const favIds = useSelector((st) => st.favorites.ids);
-  const isFav = favIds.includes(String(camper.id));
   const dispatch = useDispatch();
+  const favIds = useSelector(s => s.favorites.ids);
+  const isFav = favIds.includes(String(camper.id));
 
   return (
-    <div className={s.card}>
-      <img className={s.img} src={img} alt={camper.name} />
-      <div className={s.body}>
-        <div className={s.row}>
-          <h3 className={s.name}>{camper.name}</h3>
-          <div className={s.price}>€{priceUi(camper.price)}</div>
-        </div>
-
-        {camper.location && <div className={s.loc}>📍 {camper.location}</div>}
-
-        <div className={s.btns}>
-          <Link to={`/catalog/${camper.id}`} target="_blank" className={s.more}>
-            Show more
-          </Link>
-
-          <button
-            className={s.fav}
-            aria-pressed={isFav}
-            onClick={() => dispatch(toggleFav(camper.id))}
-            title={isFav ? "Прибрати з обраних" : "Додати в обрані"}
+    <div style={{display:"grid", gridTemplateColumns:"220px 1fr auto", gap:16, border:"1px solid #eee", borderRadius:12, padding:12}}>
+      <img src={camper.gallery?.[0]?.thumb || camper.gallery?.[0]?.original} alt={camper.name} width={220} height={140} style={{objectFit:"cover", borderRadius:10}} />
+      <div>
+        <h3 style={{margin:"0 0 6px"}}>{camper.name}</h3>
+        <p style={{margin:0, color:"#777"}}>📍 {camper.location}</p>
+      </div>
+      <div style={{textAlign:"right"}}>
+        <div style={{fontWeight:700, marginBottom:8}}>€{Number(camper.price).toFixed(2).replace(".", ",")}</div>
+        <div style={{display:"flex", gap:8}}>
+          <a
+            href={`/catalog/${camper.id}`}
+            target="_blank"
+            rel="noreferrer"
+            style={{padding:"8px 12px", border:"1px solid #ddd", borderRadius:8, textDecoration:"none"}}
           >
-            {isFav ? "★ В обраному" : "☆ Додати"}
+            Show more
+          </a>
+          <button
+            onClick={() => dispatch(toggleFavorite(camper.id))}
+            style={{padding:"8px 12px", borderRadius:8, border:"1px solid #ddd", background:isFav?"#ffe8e8":"#f7f7f7"}}
+          >
+            {isFav ? "Убрать" : "В избранные"}
           </button>
         </div>
       </div>

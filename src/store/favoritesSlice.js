@@ -1,27 +1,24 @@
 import { createSlice } from "@reduxjs/toolkit";
 
-const load = () => {
-  try {
-    return JSON.parse(localStorage.getItem("favIds")) ?? [];
-  } catch {
-    return [];
-  }
-};
-const save = (ids) => localStorage.setItem("favIds", JSON.stringify(ids));
+const initial = JSON.parse(localStorage.getItem("favorites") || "[]");
 
 const favSlice = createSlice({
   name: "favorites",
-  initialState: { ids: load() },
+  initialState: { ids: initial },   // массив id кемперов
   reducers: {
-    toggleFav: (s, a) => {
-      const id = String(a.payload);
-      s.ids = s.ids.includes(id)
-        ? s.ids.filter((x) => x !== id)
-        : [...s.ids, id];
-      save(s.ids);
+    toggleFavorite(state, action) {
+      const id = String(action.payload);
+      const i = state.ids.indexOf(id);
+      if (i === -1) state.ids.push(id);
+      else state.ids.splice(i, 1);
+      localStorage.setItem("favorites", JSON.stringify(state.ids));
     },
-  },
+    clearFavorites(state) {
+      state.ids = [];
+      localStorage.setItem("favorites", "[]");
+    }
+  }
 });
 
-export const { toggleFav } = favSlice.actions;
+export const { toggleFavorite, clearFavorites } = favSlice.actions;
 export default favSlice.reducer;

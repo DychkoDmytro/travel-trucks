@@ -1,26 +1,28 @@
 import { useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { getCamperById } from "../api/campersApi";
 import CamperCard from "../components/CamperCard";
-import { Link } from "react-router-dom";
 
 export default function FavoritesPage() {
-  const favIds = useSelector((st) => st.favorites.ids);
-  const items  = useSelector((st) => st.campers.items);
-  const favItems = items.filter((c) => favIds.includes(String(c.id)));
+  const favIds = useSelector(s => s.favorites.ids);
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      const res = [];
+      for (const id of favIds) {
+        try { res.push(await getCamperById(id)); } catch {}
+      }
+      if (!ignore) setItems(res);
+    })();
+    return () => { ignore = true; };
+  }, [favIds]);
 
   return (
     <div style={{display:"grid", gap:12}}>
-      <h1>Обране</h1>
-
-      {favItems.length === 0 ? (
-        <div>
-          <p>У вас поки немає обраних кемперів.</p>
-          <Link to="/catalog">Перейти до каталогу →</Link>
-        </div>
-      ) : (
-        <div style={{display:"grid", gap:12}}>
-          {favItems.map((c) => <CamperCard key={c.id} camper={c} />)}
-        </div>
-      )}
+      <h1>Обрані</h1>
+      {items.length === 0 ? <p>Пусто</p> : items.map(c => <CamperCard key={c.id} camper={c} />)}
     </div>
   );
 }
