@@ -1,0 +1,10 @@
+.card { display:flex; gap:16px; border:1px solid #e5e7eb; border-radius:12px; padding:12px; }
+.img  { width:220px; height:130px; object-fit:cover; border-radius:8px; background:#f6f7f9; }
+.body { flex:1; }
+.row  { display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+.name { margin:0; font-size:18px; }
+.price{ font-weight:700; }
+.loc  { color:#6b7280; margin-bottom:8px; }
+.btns { display:flex; gap:8px; }
+.more { background:#111827; color:#fff; padding:8px 12px; border-radius:8px; text-decoration:none; }
+.more:hover { opacity:.9; }
